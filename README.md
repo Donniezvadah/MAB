@@ -107,9 +107,7 @@ All agents inherit from `BaseAgent`, which defines the interface:
 
 - **Exploration/Exploitation:** With probability $ \epsilon $, select a random arm; otherwise, select the arm with the highest estimated value.
 - **Value Update:** Incremental mean:
- $$
-  Q_{n+1} = Q_n + \frac{1}{N} (R - Q_n)
-  $$
+ $$Q_{n+1} = Q_n + \frac{1}{N} (R - Q_n)$$
   where $ Q_n $ is the estimated value, $ N $ is the number of times the arm has been pulled, and $ R $ is the observed reward.
 
 ---
@@ -117,9 +115,7 @@ All agents inherit from `BaseAgent`, which defines the interface:
 ### `UCBAgent` (KL-UCB for Bernoulli)
 
 - **Selection Rule:** For each arm, compute the KL-UCB index:
- $$
-  \text{KL}(p, q) = p \log\left(\frac{p}{q}\right) + (1-p) \log\left(\frac{1-p}{1-q}\right)
-  $$
+ $$ \text{KL}(p, q) = p \log\left(\frac{p}{q}\right) + (1-p) \log\left(\frac{1-p}{1-q}\right)$$
   The index for arm $ i $ is the largest $ q \in [\hat{p}_i, 1] $ such that:
  $$
   n_i \cdot \text{KL}(\hat{p}_i, q) \leq \log t + c \log \log t

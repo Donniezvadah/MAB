@@ -21,3 +21,5 @@ venv/
 ENV/
 
 # Ignore confidence_interval/__pycache__ specifically 
+your_output_dir/
+confidence_interval/
