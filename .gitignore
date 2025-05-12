@@ -23,3 +23,6 @@ ENV/
 # Ignore confidence_interval/__pycache__ specifically 
 your_output_dir/
 confidence_interval/
+
+# Ignore API key file
+llm_api.txt

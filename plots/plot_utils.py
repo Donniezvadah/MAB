@@ -43,7 +43,7 @@ def plot_cumulative_regret(all_regrets, agent_names, output_dir, smooth_window=1
     """
     Plot cumulative regret for all agents on a single plot, with optional smoothing and adjustable line width.
     Optionally plot the upper 95% confidence interval as a dotted line (no shading).
-    If upper_cis is provided, shade the area between the main line and the upper CI.
+    If upper_cis is provided, plot the upper CI as a line only (no fill).
     Args:
         all_regrets (list of list): Each sublist is the mean regret per step for an agent.
         agent_names (list of str): Names of the agents.
@@ -62,7 +62,6 @@ def plot_cumulative_regret(all_regrets, agent_names, output_dir, smooth_window=1
         if upper_cis is not None:
             upper = moving_average(upper_cis[i], window_size=smooth_window)
             plt.plot(x, upper, linestyle=':', color=colors[i % len(colors)], linewidth=2, label=f'{name} 95% CI (upper)')
-            plt.fill_between(x, smoothed, upper, color=colors[i % len(colors)], alpha=0.15)
     plt.xlabel('Step', fontsize=12)
     plt.ylabel('Cumulative Regret', fontsize=12)
     plt.title('Cumulative Regret', fontsize=14)

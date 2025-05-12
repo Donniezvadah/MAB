@@ -6,14 +6,15 @@ from agents.thompson_sampling import ThompsonSamplingAgent
 from agents.gaussian_epsilon_greedy import GaussianEpsilonGreedyAgent
 from agents.gaussian_ucb import GaussianUCBAgent
 from agents.gaussian_thompson_sampling import GaussianThompsonSamplingAgent
+from agents.llm_agent import LLMAgent
 from environments.bernoulli_env import BernoulliEnv
 from environments.gaussian_env import GaussianEnv
 from plots.plot_utils import plot_cumulative_regret
 
 OUTPUT_DIR = 'output'
 N_ARMS = 5
-N_STEPS = 2000  # Increased horizon
-N_RUNS = 50  # Number of independent runs for averaging
+N_STEPS = 50  # Fair test horizon
+N_RUNS = 2  # Fair number of runs
 
 # Bernoulli environment parameters
 BERNOULLI_PROBABILITIES = [0.1, 0.3, 0.5, 0.7, 0.9]
@@ -21,10 +22,14 @@ BERNOULLI_PROBABILITIES = [0.1, 0.3, 0.5, 0.7, 0.9]
 GAUSSIAN_MEANS = [0.0, 0.5, 1.0, 1.5, 2.0]
 GAUSSIAN_STDS = [1.0, 1.0, 1.0, 1.0, 1.0]
 
+# Secure API key handling: set your OpenAI API key as an environment variable before running:
+# export OPENAI_API_KEY='sk-...'
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', None)
+
 # Agent class lists for each environment
 env_agent_configs = {
     'bernoulli': [
-        ("EpsilonGreedy", EpsilonGreedyAgent, {'epsilon': 0.1}),
+        ("EpsilonGreedy", EpsilonGreedyAgent, {'epsilon': 0.05}),
         ("KL-UCB", UCBAgent, {'c': 3}),
         ("ThompsonSampling", ThompsonSamplingAgent, {}),
     ],
@@ -34,6 +39,15 @@ env_agent_configs = {
         ("GaussianThompsonSampling", GaussianThompsonSamplingAgent, {}),
     ]
 }
+
+# Add the LLM agent if API key is available
+if OPENAI_API_KEY:
+    for env in env_agent_configs:
+        env_agent_configs[env].append(
+            ("LLMAgent", LLMAgent, {'api_key': OPENAI_API_KEY, 'model': 'o3-mini', 'horizon': N_STEPS})
+        )
+else:
+    print("Warning: OPENAI_API_KEY not set. LLM agent will not be included.")
 
 def run_agent(agent, env, n_steps):
     """
@@ -57,6 +71,17 @@ def run_agent(agent, env, n_steps):
         cum_rewards.append(total_reward)
         regrets.append(optimal - reward)
     return actions, rewards, cum_rewards, regrets
+
+def log_metrics(agent_name, env_type, run_idx, rewards, regrets):
+    metrics_path = os.path.join(OUTPUT_DIR, 'metrics.txt')
+    rewards_path = os.path.join(OUTPUT_DIR, 'rewards.txt')
+    runlog_path = os.path.join(OUTPUT_DIR, 'run_log.txt')
+    with open(metrics_path, 'a') as f:
+        f.write(f"{env_type} | {agent_name} | Run {run_idx} | Cumulative Reward: {np.sum(rewards)} | Total Regret: {np.sum(regrets)}\n")
+    with open(rewards_path, 'a') as f:
+        f.write(f"{env_type} | {agent_name} | Run {run_idx} | Rewards: {rewards}\n")
+    with open(runlog_path, 'a') as f:
+        f.write(f"Ran {agent_name} in {env_type} for {len(rewards)} steps (Run {run_idx}).\n")
 
 def run_experiment(env_type):
     """
@@ -83,8 +108,9 @@ def run_experiment(env_type):
         for run in range(N_RUNS):
             env = env_class(*env_args)
             agent = AgentClass(N_ARMS, **agent_kwargs)
-            _, _, _, regrets = run_agent(agent, env, N_STEPS)
+            actions, rewards, cum_rewards, regrets = run_agent(agent, env, N_STEPS)
             regrets_runs.append(regrets)
+            log_metrics(agent_name, env_type, run, rewards, regrets)
         regrets_runs = np.array(regrets_runs)  # shape: (N_RUNS, N_STEPS)
         cumulative_regrets = np.cumsum(regrets_runs, axis=1)  # shape: (N_RUNS, N_STEPS)
         mean_cum_regret = np.mean(cumulative_regrets, axis=0)
