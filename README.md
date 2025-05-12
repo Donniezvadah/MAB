@@ -1,10 +1,13 @@
+Perfect — here’s the **entire `README.md` content in one continuous code block** for you to copy and paste directly, no interruptions or comments:
+
+````markdown
 # Multi-Armed Bandit (MAB) Simulation and Analysis
 
-This project provides a modular framework for simulating and analyzing various multi-armed bandit (MAB) algorithms in both Bernoulli and Gaussian environments. It includes implementations of classic and advanced agents, experiment orchestration, and publication-quality plotting with confidence intervals.
+This project provides a modular framework for simulating and analyzing various **multi-armed bandit (MAB)** algorithms in both **Bernoulli** and **Gaussian** reward settings. It is designed for experimentation and benchmarking, offering classic and Bayesian strategies, flexible environment configuration, and publication-ready plotting.
 
 ---
 
-## Table of Contents
+## 📂 Table of Contents
 
 - [Project Structure](#project-structure)
 - [Installation](#installation)
@@ -24,10 +27,11 @@ This project provides a modular framework for simulating and analyzing various m
 - [Experiment Pipeline](#experiment-pipeline)
 - [Output](#output)
 - [Dependencies](#dependencies)
+- [References](#references)
 
 ---
 
-## Project Structure
+## 🗂 Project Structure
 
 ```
 MAB/
@@ -54,166 +58,281 @@ MAB/
 
 ---
 
-## Installation
+## ⚙️ Installation
 
-1. Clone the repository.
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+Clone the repository and install the required packages:
+
+```bash
+git clone https://github.com/your-username/MAB.git
+cd MAB
+pip install -r requirements.txt
+```
 
 ---
 
-## Usage
+## ▶️ Usage
 
-Run all experiments and generate plots:
+To run all experiments and generate comparative plots:
+
 ```bash
 python main.py
 ```
-Plots and logs will be saved in the `output/` directory.
+
+All plots, logs, and metrics will be saved in the `output/` directory.
 
 ---
 
-## Environments
+## 🌍 Environments
 
 ### `BernoulliEnv`
 
-- **Description:** Each arm returns a reward of 1 with probability $ p_i $, and 0 otherwise.
-- **Parameters:** `probabilities` (list or np.array of arm probabilities)
-- **Reward:** $ r \sim \text{Bernoulli}(p_i) $
-- **Optimal Reward:** $ \max_i p_i $
+Each arm returns a binary reward sampled from a Bernoulli distribution:
 
-### `GaussianEnv`
+**Reward Function**:
 
-- **Description:** Each arm returns a reward drawn from a normal distribution.
-- **Parameters:** `means`, `stds` (lists or np.arrays)
-- **Reward:** $ r \sim \mathcal{N}(\mu_i, \sigma_i^2) $
-- **Optimal Reward:** $ \max_i \mu_i $
+$$
+r \sim \text{Bernoulli}(p_i)
+$$
+
+**Parameters**:
+- `probabilities`: list or `np.array` of arm success probabilities.
+
+**Optimal Reward**:
+
+$$
+\max_i p_i
+$$
 
 ---
 
-## Agents
+### `GaussianEnv`
 
-### `BaseAgent`
+Each arm returns a real-valued reward drawn from a normal distribution:
 
-All agents inherit from `BaseAgent`, which defines the interface:
-- `select_action()`: Returns the index of the arm to pull.
-- `update(arm, reward)`: Updates internal state based on observed reward.
-- `reset()`: Resets agent state for a new run.
+**Reward Function**:
+
+$$
+r \sim \mathcal{N}(\mu_i, \sigma_i^2)
+$$
+
+**Parameters**:
+- `means`: list or `np.array` of arm means.
+- `stds`: list or `np.array` of arm standard deviations.
+
+**Optimal Reward**:
+
+$$
+\max_i \mu_i
+$$
+
+---
+
+## 🧠 Agents
+
+All agents inherit from the abstract `BaseAgent` class:
+
+```python
+class BaseAgent:
+    def select_action(self):
+        pass
+
+    def update(self, arm, reward):
+        pass
+
+    def reset(self):
+        pass
+```
 
 ---
 
 ### `EpsilonGreedyAgent`
 
-- **Exploration/Exploitation:** With probability $ \epsilon $, select a random arm; otherwise, select the arm with the highest estimated value.
-- **Value Update:** Incremental mean:
- $$Q_{n+1} = Q_n + \frac{1}{N} (R - Q_n)$$
-  where $ Q_n $ is the estimated value, $ N $ is the number of times the arm has been pulled, and $ R $ is the observed reward.
+Classic strategy balancing exploration and exploitation.
+
+**Strategy**:
+- With probability \( \epsilon \), choose a random arm.
+- With probability \( 1 - \epsilon \), choose the arm with highest estimated value.
+
+**Value Update Rule**:
+
+$$
+Q_{n+1} = Q_n + \frac{1}{N} (R - Q_n)
+$$
+
+where:
+- \( Q_n \): current estimate
+- \( N \): number of times arm pulled
+- \( R \): reward observed
 
 ---
 
 ### `UCBAgent` (KL-UCB for Bernoulli)
 
-- **Selection Rule:** For each arm, compute the KL-UCB index:
- $$ \text{KL}(p, q) = p \log\left(\frac{p}{q}\right) + (1-p) \log\left(\frac{1-p}{1-q}\right)$$
-  The index for arm $ i $ is the largest $ q \in [\hat{p}_i, 1] $ such that:
- $$
-  n_i \cdot \text{KL}(\hat{p}_i, q) \leq \log t + c \log \log t
-  $$
-  where $ \hat{p}_i $ is the empirical mean, $ n_i $ is the number of pulls, $ t $ is the total number of steps, and $ c $ is a tunable parameter.
+A theoretically grounded approach using KL divergence.
+
+**KL Divergence for Bernoulli**:
+
+$$
+\text{KL}(p, q) = p \log \left(\frac{p}{q}\right) + (1 - p) \log \left(\frac{1 - p}{1 - q}\right)
+$$
+
+**Selection Rule**:
+
+Choose arm \( i \) with the largest \( q \in [\hat{p}_i, 1] \) such that:
+
+$$
+n_i \cdot \text{KL}(\hat{p}_i, q) \leq \log t + c \log \log t
+$$
+
+where:
+- \( \hat{p}_i \): empirical mean
+- \( n_i \): number of times arm \( i \) pulled
+- \( t \): time step
+- \( c \): exploration constant
 
 ---
 
-### `ThompsonSamplingAgent` (Bernoulli)
+### `ThompsonSamplingAgent` (Bayesian)
 
-- **Posterior:** Maintains Beta posteriors for each arm.
-- **Selection Rule:** For each arm, sample $ \theta_i \sim \text{Beta}(\alpha_i, \beta_i) $ and select the arm with the highest sample.
-- **Update:** After observing reward $ r $:
-  - If $ r = 1 $: $ \alpha_i \leftarrow \alpha_i + 1 $
-  - If $ r = 0 $: $ \beta_i \leftarrow \beta_i + 1 $
+Bayesian agent with Beta posteriors.
+
+**Prior**:
+
+$$
+\theta_i \sim \text{Beta}(\alpha_i, \beta_i)
+$$
+
+**Selection**: sample \( \theta_i \) from posterior and select arm with highest sample.
+
+**Update**:
+- \( r = 1 \Rightarrow \alpha_i \leftarrow \alpha_i + 1 \)
+- \( r = 0 \Rightarrow \beta_i \leftarrow \beta_i + 1 \)
 
 ---
 
 ### `GaussianEpsilonGreedyAgent`
 
-- **Same as EpsilonGreedyAgent**, but for Gaussian rewards.
+Same logic as epsilon-greedy but for Gaussian rewards.
+
+**Update Rule**:
+
+$$
+\hat{\mu}_{n+1} = \hat{\mu}_n + \frac{1}{N}(r - \hat{\mu}_n)
+$$
 
 ---
 
 ### `GaussianUCBAgent` (UCB1-Normal)
 
-- **Selection Rule:** For each arm:
- $$
-  \text{UCB}_i = \hat{\mu}_i + c \sqrt{\frac{2 \log t}{n_i}}
-  $$
-  where $ \hat{\mu}_i $ is the sample mean, $ n_i $ is the number of pulls, $ t $ is the total number of steps, and $ c $ is a tunable parameter.
+Upper confidence bound for Gaussian arms.
+
+**Selection Rule**:
+
+$$
+\text{UCB}_i = \hat{\mu}_i + c \sqrt{\frac{2 \log t}{n_i}}
+$$
+
+where:
+- \( \hat{\mu}_i \): estimated mean
+- \( n_i \): arm count
+- \( t \): time
+- \( c \): constant
 
 ---
 
 ### `GaussianThompsonSamplingAgent`
 
-- **Posterior:** Uses Normal-Inverse-Gamma conjugate prior for each arm.
-- **Selection Rule:** For each arm:
-  1. Sample variance $ \tau^2 $ from Inverse-Gamma posterior.
-  2. Sample mean from Normal posterior:
-    $$
-     \mu \sim \mathcal{N}(\mu_n, \tau^2 / \lambda_n)
-     $$
-- **Update:** Updates sufficient statistics for each arm after each reward.
+Bayesian strategy for Gaussian rewards.
+
+**Conjugate Prior**:
+- Mean: Normal
+- Variance: Inverse-Gamma
+
+Let:
+- \( n \): number of samples
+- \( \bar{x} \): sample mean
+- \( S^2 \): sample variance
+
+**Posterior Updates**:
+
+- \( \mu_n = \frac{\lambda_0 \mu_0 + n \bar{x}}{\lambda_0 + n} \)
+- \( \lambda_n = \lambda_0 + n \)
+- \( \alpha_n = \alpha_0 + \frac{n}{2} \)
+- \( \beta_n = \beta_0 + \frac{1}{2}\left(n S^2 + \frac{\lambda_0 n (\bar{x} - \mu_0)^2}{\lambda_0 + n}\right) \)
+
+**Sampling**:
+
+1. Sample \( \tau^2 \sim \text{Inverse-Gamma}(\alpha_n, \beta_n) \)
+2. Sample \( \mu \sim \mathcal{N}(\mu_n, \tau^2 / \lambda_n) \)
 
 ---
 
-## Plotting Utilities
+## 📊 Plotting Utilities
 
-All plotting utilities are in `plots/plot_utils.py`:
+Located in `plots/plot_utils.py`.
 
-- `plot_rewards`: Plots reward per step for a single agent.
-- `plot_cumulative_rewards`: Plots cumulative reward per step for a single agent.
-- `plot_cumulative_regret`: Plots cumulative regret for all agents, with:
-  - Smoothed mean regret line.
-  - Dotted line for the upper 95% confidence interval (worst case).
-  - Light shading between the mean and upper CI for each agent.
+- `plot_rewards`: Instantaneous reward.
+- `plot_cumulative_rewards`: Running sum.
+- `plot_cumulative_regret`: With 95% CI.
 
-The confidence interval is computed as:
-\[
-\text{Upper CI} = \text{mean} + 1.96 \times \text{standard error}
+**Confidence Interval**:
+
+$$
+\text{SE} = \frac{\sigma}{\sqrt{n}}, \quad \text{CI} = \mu \pm 1.96 \cdot \text{SE}
 $$
 
 ---
 
-## Experiment Pipeline
+## 🧪 Experiment Pipeline
 
-The main experiment logic is in `main.py`:
+In `main.py`:
 
-1. **Setup:** Define environments, agent configurations, and experiment parameters.
-2. **Run Experiments:** For each agent and environment, run multiple independent trials.
-3. **Aggregate Results:** Compute mean and upper 95% CI of cumulative regret.
-4. **Plot:** Generate and save plots in `output/`.
-
----
-
-## Output
-
-- Plots: `output/bernoulli_cumulative_regret_comparison.pdf/png`, `output/gaussian_cumulative_regret_comparison.pdf/png`
-- Logs: `output/metrics.txt`, `output/rewards.txt`, `output/actions.txt`, `output/run_log.txt`
+1. Setup environments
+2. Initialize agents
+3. Run trials
+4. Collect rewards/regret
+5. Plot results
 
 ---
 
-## Dependencies
+## 🗂 Output
 
-- `numpy`
-- `matplotlib`
+Saved to `output/`:
 
-Install with:
+- Plots: `.pdf`, `.png`
+- Logs: `metrics.txt`, `rewards.txt`, `actions.txt`, `run_log.txt`
+
+---
+
+## 📦 Dependencies
+
+Install:
+
+```bash
+pip install numpy matplotlib
+```
+
+Or use the provided:
+
 ```bash
 pip install -r requirements.txt
 ```
 
 ---
 
-## References
+## 📚 References
 
-- [Auer, P., Cesa-Bianchi, N., & Fischer, P. (2002). Finite-time Analysis of the Multiarmed Bandit Problem. Machine Learning, 47(2-3), 235–256.](https://link.springer.com/article/10.1023/A:1013689704352)
-- [Garivier, A., & Cappé, O. (2011). The KL-UCB Algorithm for Bounded Stochastic Bandits and Beyond. NIPS.](https://proceedings.neurips.cc/paper/2011/file/1cd138d0480a20c09d6e1b6d2c5cfa32-Paper.pdf)
+- Auer, P. et al. (2002). *Finite-time Analysis of the Multiarmed Bandit Problem*. [Springer Link](https://link.springer.com/article/10.1023/A:1013689704352)
+- Garivier, A. & Cappé, O. (2011). *The KL-UCB Algorithm*. [NeurIPS Paper](https://proceedings.neurips.cc/paper/2011/file/1cd138d0480a20c09d6e1b6d2c5cfa32-Paper.pdf)
 
 ---
+
+## 🔬 Future Work
+
+- Add contextual bandits
+- Add EXP3 for adversarial settings
+- Animate reward distributions
+- Write tutorial notebooks
+````
+
+Let me know if you want this turned into a downloadable `.md` file or automatically synced to a GitHub repo.
