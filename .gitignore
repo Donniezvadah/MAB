@@ -1,0 +1,23 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# Output and logs
+# your_output_dir/
+# output/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# VSCode settings
+.vscode/
+
+# MacOS
+.DS_Store
+
+# Python virtual environments
+.venv/
+venv/
+ENV/
+
+# Ignore confidence_interval/__pycache__ specifically 
