@@ -1,0 +1,12 @@
+ EpsilonGreedy Cumulative Reward: 418.0
+EpsilonGreedy Total Regret: 31.999999999999467
+UCB Cumulative Reward: 369.0
+UCB Total Regret: 81.00000000000044
+ThompsonSampling Cumulative Reward: 423.0
+ThompsonSampling Total Regret: 26.999999999999346
+EpsilonGreedy Cumulative Reward: 437.0
+EpsilonGreedy Total Regret: 13.000000000000153
+UCB Cumulative Reward: 381.0
+UCB Total Regret: 68.99999999999997
+ThompsonSampling Cumulative Reward: 445.0
+ThompsonSampling Total Regret: 5.000000000000149

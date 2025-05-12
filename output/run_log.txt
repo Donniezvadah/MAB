@@ -1,0 +1,6 @@
+ Ran EpsilonGreedy for 500 steps.
+Ran UCB for 500 steps.
+Ran ThompsonSampling for 500 steps.
+Ran EpsilonGreedy for 500 steps.
+Ran UCB for 500 steps.
+Ran ThompsonSampling for 500 steps.
