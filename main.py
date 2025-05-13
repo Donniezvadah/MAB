@@ -13,8 +13,8 @@ from plots.plot_utils import plot_cumulative_regret
 
 OUTPUT_DIR = 'output'
 N_ARMS = 5
-N_STEPS = 50  # Fair test horizon
-N_RUNS = 2  # Fair number of runs
+N_STEPS = 10000  # Fair test horizon
+N_RUNS = 20  # Fair number of runs
 
 # Bernoulli environment parameters
 BERNOULLI_PROBABILITIES = [0.1, 0.3, 0.5, 0.7, 0.9]
